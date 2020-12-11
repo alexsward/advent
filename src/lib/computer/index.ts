@@ -21,7 +21,7 @@ export enum OpCode {
   TERMINATE = 99,
 }
 
-const isValidCode = (candidate: number): boolean => (1 <= candidate || candidate <= 4) || candidate == 99;
+const isValidCode = (candidate: number): boolean => (1 <= candidate || candidate < 9) || candidate === 99;
 
 const toCode = (raw: number): OpCode => {
   const code: number = raw % 100;
@@ -37,8 +37,11 @@ export type Program = number[]
 
 const DefaultModes = [ Mode.POSITION, Mode.POSITION, Mode.POSITION ];
 
-export const parseProgram = (contents: string): Program =>
-    contents.split(",").map((code: string) => parseInt(code, 10)).filter((n: number) => !isNaN(n));
+export const parseProgram = (contents: string): Program => contents
+    .split(",")
+    .filter((line: string) => line.length > 0)
+    .map((code: string) => parseInt(code, 10))
+    .filter((n: number) => !isNaN(n));
 
 export const toInstruction = (program: Program, index: number): Instruction => {
   let code: number = program[index];
@@ -51,8 +54,11 @@ export const toInstruction = (program: Program, index: number): Instruction => {
 };
 
 export const execute = (program: Program): Program => {
-  for (let idx: number = 0; idx < program.length;) {
+  for (let idx: number = 0, iter: number = 0; idx < program.length; iter++) {
     let inst: Instruction = toInstruction(program, idx);
+    // console.log("idx:", idx, "instruction:", inst); //, "program:", program);
+    console.log("iter:", iter, "idx:", idx, "instruction:", inst)
+    console.log("program:", program);
     switch (inst.code) {
       case OpCode.TERMINATE: return program
       case OpCode.ADD:
@@ -66,13 +72,9 @@ export const execute = (program: Program): Program => {
         idx += 2;
         break;
       case OpCode.INPUT:
-        // console.log("should be first INPUT: ", idx, inst);
-        let input: number = 5;
-        // rl.question("Please input a value: ", (v: string) => {
-        //   input = parseInt(v, 10);
-        //   rl.close();
-        // });
-        program[program[idx + 1]] = input;
+        let input: number = 1;
+        console.log("doing index at:", fetchValue(program, inst.modes[0], idx + 1));
+        program[fetchValue(program, inst.modes[0], idx + 1)] = input;
         idx += 2;
         break;
       case OpCode.JUMP_TRUE:
@@ -88,15 +90,15 @@ export const execute = (program: Program): Program => {
         idx = equals(program, inst, idx);
         break;
       default:
-        idx++;
-        break;
+        return program;
     }
   }
   return program;
 };
 
 const add = (program: Program, inst: Instruction, idx: number): number => {
-  program[program[idx + 3]] = fetchValue(program, inst.modes[0], idx + 1) + fetchValue(program, inst.modes[1], idx + 2);
+  console.log("added to:", fetchValue(program, inst.modes[0], idx + 1) + fetchValue(program, inst.modes[1], idx + 2), "and putting it in:", program[program[idx+3]]);
+  program[fetchValue(program, inst.modes[2], idx + 3)] = fetchValue(program, inst.modes[0], idx + 1) + fetchValue(program, inst.modes[1], idx + 2);
   return idx + 4;
 }
 
@@ -107,8 +109,10 @@ const multiply = (program: Program, inst: Instruction, idx: number): number => {
 
 const jumpTrue = (program: Program, inst: Instruction, idx: number): number => {
   let test: number = fetchValue(program, inst.modes[0], idx + 1);
-  if (test != 0) {;
-    return fetchValue(program, inst.modes[1], idx + 2);
+  if (test !== 0) {
+    let x = fetchValue(program, inst.modes[1], idx + 2)
+    console.log("HELLO: ", fetchValue(program, inst.modes[1], idx + 2))
+    return x;
   } else {
     return idx + 3;
   }
@@ -116,7 +120,7 @@ const jumpTrue = (program: Program, inst: Instruction, idx: number): number => {
 
 const jumpFalse = (program: Program, inst: Instruction, idx: number): number => {
   let test: number = fetchValue(program, inst.modes[0], idx + 1);
-  if (test == 0) {
+  if (test === 0) {
     return fetchValue(program, inst.modes[1], idx + 2);
   } else {
     return idx + 3;

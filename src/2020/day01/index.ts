@@ -2,7 +2,7 @@ import * as fs from 'fs';
 
 const getInput = (filename: string): number[] =>
     fs.readFileSync(filename, "utf8").split("\n")
-      .map((line: string) => parseInt(line))
+      .map((line: string) => parseInt(line, 10))
       .sort((x: number, y: number) => x - y);
 
 const part1 = (): number => {
