@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { reducePairs } from '../../lib/fx';
 
 type Time = {
   month: number,
@@ -33,30 +34,73 @@ const parseLog = (line: string): Log => {
     default:
       const m: RegExpMatchArray | null = c[6].match(/\#(\d+)/);
       if (m == null) throw new Error("Invalid event: " + line);
-      guard = parseInt(m[0], 10);
+      guard = parseInt(m[1], 10);
   }
   return {
     time: {
-      year: parseInt(c[0], 10),
-      month: parseInt(c[1], 10),
-      day: parseInt(c[2], 10),
-      hour: parseInt(c[3], 10),
-      minute: parseInt(c[4], 10),
+      year: parseInt(c[1], 10),
+      month: parseInt(c[2], 10),
+      day: parseInt(c[3], 10),
+      hour: parseInt(c[4], 10),
+      minute: parseInt(c[5], 10),
     },
     guard: guard,
     event: event,
   };
 };
 
-const compare = (l1: Log, l2: Log): number => {
-  return 0;
-}
+const compareLogs = (l1: Log, l2: Log): number => {
+  const t1: Time = l1.time, t2: Time = l2.time;
+  if (t1.year - t2.year !== 0) {
+    return t1.year - t2.year;
+  } else if (t1.month - t2.month !== 0) {
+    return t1.month - t2.month;
+  } else if (t1.day - t2.day !== 0) {
+    return t1.day - t2.day;
+  } else if (t1.hour - t2.hour !== 0) {
+    return t1.hour - t2.hour;
+  } else if (t1.minute - t2.minute !== 0) {
+    return t1.minute - t2.minute;
+  }
+  return 0
+};
+
+type Group = {
+  guard: number,
+  total: number,
+  minutes: number[], // array of length 60
+};
+
+const grouping = (log: Log[]): void => {
+  let curr: number = 0;
+  let gs: Map<number, Log[]> = log.reduce((m: Map<number, Log[]>, log: Log) => {
+    console.log("log:", log);
+    if (log.guard !== undefined) {
+      m.set(log.guard || 0, []);
+      curr = log.guard;
+    }
+    (m.get(curr) || []).push(log);
+    return m;
+  }, new Map<number, Log[]>())
+  Array.from(gs.entries()).reduce((guards: Group[], g: [number, Log[]]) => {
+    reducePairs(log, (minutes: number[], l1: Log, l2: Log) => {
+      return minutes;
+    }, [] as number[])
+    guards.push({
+      guard: g[0],
+      total: 0,
+      minutes: [],
+    })
+    return guards
+  }, []);
+};
 
 const part1 = (): void => {
   const log: Log[] = fs.readFileSync("src/2018/day04/input", "utf8")
       .split("\n").filter((line: string) => line.length > 0)
       .map((line: string) => parseLog(line))
-      .sort(compare)
+      .sort(compareLogs);
+  grouping(log);
 }
 
 part1();
