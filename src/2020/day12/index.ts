@@ -12,8 +12,6 @@ type Position = {
   orientation: Orientation,
 };
 
-const Orientations: Orientation[] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
 export const parseInstructions = (input: string): Instruction[] =>
     input.split("\n").filter((line: string) => line.length > 0)
       .map((inst: string) => {
@@ -40,7 +38,7 @@ export const changePosition = (instruction: Instruction, p: Position): Position 
     case 'R':
       return { location: p.location, orientation: reorient(p.orientation, 'R', instruction.value) }
     case 'L':
-      return { location: p.location, orientation: reorient(p.orientation, 'L', 360 - instruction.value) }
+      return { location: p.location, orientation: reorient(p.orientation, 'L', instruction.value) }
     default:
       throw new Error("Not an understood instruction");
   }
