@@ -1,0 +1,13 @@
+run day part *flags:
+    #!/usr/bin/env sh
+    cd {{day}}
+    go build -o solution
+    ./solution --part {{part}} {{flags}}
+
+init day:
+    mkdir {{day}}
+    touch {{day}}/main.go
+    echo "package main" >> {{day}}/main.go
+    touch {{day}}/README.md
+    touch {{day}}/input
+    git add {{day}}/*
